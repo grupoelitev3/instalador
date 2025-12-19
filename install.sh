@@ -50,46 +50,6 @@ if [ "$MODO" == "update" ]; then
     exit 0
 fi
 
-# --- SUPABASE CONFIG ---
-SUPABASE_URL="https://supabase.buddysoftware.com.br"
-SUPABASE_API_KEY="${SUPABASE_API_KEY:-}" # Deve ser configurado como variável de ambiente
-SUPABASE_TABLE="installations"
-
-get_public_ip() {
-  curl -s https://api.ipify.org
-}
-
-validate_installation() {
-  local ip="$1"
-  local token="$2"
-  local url="${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?server_ip=eq.${ip}&token=eq.${token}"
-  local result=$(curl -s -H "apikey: $SUPABASE_API_KEY" -H "Authorization: Bearer $SUPABASE_API_KEY" "$url")
-  if [[ "$result" == "[]" ]]; then
-    return 1
-  else
-    return 0
-  fi
-}
-
-# 🛡️ Solicita e valida o token
-echo "🔐 Digite o token de instalação:"
-read -r INSTALL_TOKEN
-
-if [ -z "$INSTALL_TOKEN" ]; then
-  echo "❌ ERRO: O token de instalação é obrigatório. Encerrando..."
-  exit 1
-fi
-
-SERVER_IP=$(get_public_ip)
-echo "🔎 IP detectado: $SERVER_IP"
-
-if ! validate_installation "$SERVER_IP" "$INSTALL_TOKEN"; then
-  echo "❌ ERRO: IP ou TOKEN de instalação inválido. Instalação bloqueada!"
-  exit 1
-fi
-
-echo "✅ Validação de IP e TOKEN bem-sucedida!"
-
 # 🛠️ Coleta de domínios
 read -r -p "🌐 DOMÍNIO do FRONTEND: " FRONTEND_URL
 ping -c 1 "$FRONTEND_URL" || echo "⚠️ Domínio $FRONTEND_URL não está acessível."
@@ -178,7 +138,6 @@ update_env_var "REACT_APP_FACEBOOK_APP_ID" "$FACEBOOK_APP_ID" "./frontend/.env"
 # 🔁 Substituição direta de placeholders
 replace_vars() {
     sed -i \
-        -e "s|__INSTALL_TOKEN__|$INSTALL_TOKEN|g" \
         -e "s|__FRONTEND_URL__|$FRONTEND_URL|g" \
         -e "s|__BACKEND_URL__|$BACKEND_URL|g" \
         -e "s|__TRANSCRICAO_URL__|$TRANSCRICAO_URL|g" \
