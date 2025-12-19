@@ -33,10 +33,12 @@ done
 
 # 🔄 Se for atualização, faz apenas pull e up
 if [ "$MODO" == "update" ]; then
-    echo "🔐 Digite seu token do Docker Hub:"
-    read -r DOCKER_TOKEN
-    echo "🔐 Login no Docker Hub..."
-    echo "$DOCKER_TOKEN" | docker login -u aarcav3 --password-stdin
+    echo "🔐 Credenciais do Registry (registry.v3elite.com.br):"
+    read -r -p "👤 Usuário: " REGISTRY_USER
+    read -r -s -p "🔒 Senha: " REGISTRY_PASS
+    echo ""
+    echo "🔐 Login no Registry..."
+    echo "$REGISTRY_PASS" | docker login registry.v3elite.com.br -u "$REGISTRY_USER" --password-stdin
 
     echo "⬇️ Atualizando imagens..."
     docker compose pull
@@ -218,11 +220,12 @@ if ! docker compose version &> /dev/null; then
 fi
 
 # 🔐 Login e Deploy
-echo "🔐 Digite seu token do Docker Hub:"
-read -r DOCKER_TOKEN
-
-echo "🔐 Login no Docker Hub..."
-echo "$DOCKER_TOKEN" | docker login -u aarcav3 --password-stdin
+echo "🔐 Credenciais do Registry (registry.v3elite.com.br):"
+read -r -p "👤 Usuário: " REGISTRY_USER
+read -r -s -p "🔒 Senha: " REGISTRY_PASS
+echo ""
+echo "🔐 Login no Registry..."
+echo "$REGISTRY_PASS" | docker login registry.v3elite.com.br -u "$REGISTRY_USER" --password-stdin
 
 echo "🚀 Subindo stack com Docker Compose..."
 docker compose up -d --remove-orphans

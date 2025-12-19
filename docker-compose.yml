@@ -120,7 +120,7 @@
       restart: unless-stopped
 
     aarca_channel:
-      image: aarcaoficial/channel:__DOCKER_TAG__
+      image: registry.v3elite.com.br/channel/channel:__DOCKER_TAG__
       container_name: aarca_channel
       env_file: ./channel/.env
       networks:
@@ -133,7 +133,7 @@
         - minio
 
     aarca_backend:
-      image: aarcaoficial/backend:__DOCKER_TAG__
+      image: registry.v3elite.com.br/backend/backend:__DOCKER_TAG__
       container_name: aarca_backend
       env_file: ./Backend/.env
       labels:
@@ -150,7 +150,7 @@
         - aarca_channel
 
     aarca_transcricao:
-      image: aarcaoficial/trancricao:__DOCKER_TAG__
+      image: registry.v3elite.com.br/library/trancricao:__DOCKER_TAG__
       container_name: aarca_transcricao
       ports:
         - "5000:5000"
@@ -173,7 +173,7 @@
       restart: unless-stopped
 
     aarca_frontend:
-      image: aarcaoficial/frontend:__DOCKER_TAG__
+      image: registry.v3elite.com.br/frontend/frontend:__DOCKER_TAG__
       container_name: aarca_frontend
       env_file: ./frontend/.env
       labels:
