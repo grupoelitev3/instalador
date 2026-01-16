@@ -8,6 +8,20 @@ if ! [ -t 0 ]; then
   exit 1
 fi
 
+# 🔧 Função para detectar o comando Docker Compose correto
+detect_docker_compose() {
+    if docker compose version &> /dev/null 2>&1; then
+        echo "docker compose"
+    elif docker-compose version &> /dev/null 2>&1; then
+        echo "docker-compose"
+    else
+        echo ""
+    fi
+}
+
+# 📦 Detecta o comando Docker Compose disponível
+DOCKER_COMPOSE_CMD=$(detect_docker_compose)
+
 # 🚀 Escolha entre Instalação ou Atualização
 echo "⚙️ Qual operação deseja realizar?"
 options=("Instalação" "Atualização")
@@ -46,10 +60,10 @@ if [ "$MODO" == "update" ]; then
     sed -i "s|__GITHUB_REPO__|$GITHUB_REPO|g" ./docker-compose.yml
 
     echo "⬇️ Atualizando imagens..."
-    docker compose pull
+    eval "$DOCKER_COMPOSE_CMD pull"
 
     echo "🚀 Reiniciando serviços..."
-    docker compose up -d --remove-orphans
+    eval "$DOCKER_COMPOSE_CMD up -d --remove-orphans"
 
     echo "✅ Atualização concluída!"
     exit 0
@@ -179,12 +193,15 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # 📦 Instala Docker Compose se necessário
-if ! docker compose version &> /dev/null; then
+if [ -z "$DOCKER_COMPOSE_CMD" ]; then
     echo "📦 Instalando Docker Compose..."
     curl -SL https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
     ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+    DOCKER_COMPOSE_CMD="docker-compose"
     echo "✅ Docker Compose instalado."
+else
+    echo "✅ Docker Compose detectado: $DOCKER_COMPOSE_CMD"
 fi
 
 # 🔐 Login no GitHub Container Registry
@@ -197,6 +214,6 @@ echo ""
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
 
 echo "🚀 Subindo stack com Docker Compose..."
-docker compose up -d --remove-orphans
+eval "$DOCKER_COMPOSE_CMD up -d --remove-orphans"
 
 echo "🎉 Instalação concluída com sucesso!"
