@@ -33,12 +33,17 @@ done
 
 # 🔄 Se for atualização, faz apenas pull e up
 if [ "$MODO" == "update" ]; then
-    echo "🔐 Credenciais do Registry (registry.v3elite.com.br):"
-    read -r -p "👤 Usuário: " REGISTRY_USER
-    read -r -s -p "🔒 Senha: " REGISTRY_PASS
+    read -r -p "📦 Repositório GitHub (ex: usuario/repo ou org/repo): " GITHUB_REPO
+    echo "🔐 Login no GitHub Container Registry (GHCR)..."
+    echo "⚠️ Você precisa de um Personal Access Token (PAT) do GitHub com permissão 'read:packages'"
+    echo "📝 Crie um em: https://github.com/settings/tokens"
+    read -r -p "👤 Usuário GitHub: " GITHUB_USER
+    read -r -s -p "🔑 GitHub Personal Access Token: " GITHUB_TOKEN
     echo ""
-    echo "🔐 Login no Registry..."
-    echo "$REGISTRY_PASS" | docker login registry.v3elite.com.br -u "$REGISTRY_USER" --password-stdin
+    echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+
+    # Substitui o placeholder do repositório GitHub
+    sed -i "s|__GITHUB_REPO__|$GITHUB_REPO|g" ./docker-compose.yml
 
     echo "⬇️ Atualizando imagens..."
     docker compose pull
@@ -49,6 +54,9 @@ if [ "$MODO" == "update" ]; then
     echo "✅ Atualização concluída!"
     exit 0
 fi
+
+# 📦 Repositório GitHub
+read -r -p "📦 Repositório GitHub (ex: usuario/repo ou org/repo): " GITHUB_REPO
 
 # 🛠️ Coleta de domínios
 read -r -p "🌐 DOMÍNIO do FRONTEND: " FRONTEND_URL
@@ -154,7 +162,8 @@ replace_vars() {
         -e "s|__FACEBOOK_APP_SECRET__|$FACEBOOK_APP_SECRET|g" \
         -e "s|__FACEBOOK_APP_ID__|$FACEBOOK_APP_ID|g" \
         -e "s|__VERIFY_TOKEN__|$VERIFY_TOKEN|g" \
-        -e "s|__DOCKER_TAG__|$DOCKER_TAG|g" "$1"
+        -e "s|__DOCKER_TAG__|$DOCKER_TAG|g" \
+        -e "s|__GITHUB_REPO__|$GITHUB_REPO|g" "$1"
 }
 
 for FILE in ./Backend/.env ./channel/.env ./frontend/.env ./docker-compose.yml; do
@@ -178,13 +187,14 @@ if ! docker compose version &> /dev/null; then
     echo "✅ Docker Compose instalado."
 fi
 
-# 🔐 Login e Deploy
-echo "🔐 Credenciais do Registry (registry.v3elite.com.br):"
-read -r -p "👤 Usuário: " REGISTRY_USER
-read -r -s -p "🔒 Senha: " REGISTRY_PASS
+# 🔐 Login no GitHub Container Registry
+echo "🔐 Login no GitHub Container Registry (GHCR)..."
+echo "⚠️ Você precisa de um Personal Access Token (PAT) do GitHub com permissão 'read:packages'"
+echo "📝 Crie um em: https://github.com/settings/tokens"
+read -r -p "👤 Usuário GitHub: " GITHUB_USER
+read -r -s -p "🔑 GitHub Personal Access Token: " GITHUB_TOKEN
 echo ""
-echo "🔐 Login no Registry..."
-echo "$REGISTRY_PASS" | docker login registry.v3elite.com.br -u "$REGISTRY_USER" --password-stdin
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
 
 echo "🚀 Subindo stack com Docker Compose..."
 docker compose up -d --remove-orphans
