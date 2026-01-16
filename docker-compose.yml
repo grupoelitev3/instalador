@@ -150,7 +150,7 @@
         - aarca_channel
 
     aarca_transcricao:
-      image: aarcaoficial/trancricao:__DOCKER_TAG__
+      image: ghcr.io/__GITHUB_REPO__/transcricao:__DOCKER_TAG__
       container_name: aarca_transcricao
       ports:
         - "5000:5000"
