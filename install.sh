@@ -19,6 +19,20 @@ detect_docker_compose() {
     fi
 }
 
+# 🔧 Função para normalizar repositório GitHub
+normalize_github_repo() {
+    local repo="$1"
+    # Remove protocolo http/https se presente
+    repo=$(echo "$repo" | sed 's|^https\?://||')
+    # Remove github.com/ se presente
+    repo=$(echo "$repo" | sed 's|^github\.com/||')
+    # Remove .git se presente no final
+    repo=$(echo "$repo" | sed 's|\.git$||')
+    # Remove espaços
+    repo=$(echo "$repo" | tr -d ' ')
+    echo "$repo"
+}
+
 # 📦 Detecta o comando Docker Compose disponível
 DOCKER_COMPOSE_CMD=$(detect_docker_compose)
 
@@ -33,21 +47,39 @@ select opt in "${options[@]}"; do
     esac
 done
 
-# 🔁 Ambiente
+# 🔁 Ambiente e Tag
 DOCKER_TAG="latest"
 echo "⚠️ Selecione o ambiente:"
-options=("Produção" "Desenvolvimento")
+options=("Produção" "Desenvolvimento" "Tag personalizada")
 select opt in "${options[@]}"; do
     case $opt in
-        "Produção") echo "⚠️ Ambiente: Produção"; DOCKER_TAG="latest"; break ;;
-        "Desenvolvimento") echo "⚠️ Ambiente: Desenvolvimento"; DOCKER_TAG="develop"; break ;;
+        "Produção") 
+            echo "⚠️ Ambiente: Produção"
+            DOCKER_TAG="latest"
+            break 
+            ;;
+        "Desenvolvimento") 
+            echo "⚠️ Ambiente: Desenvolvimento"
+            DOCKER_TAG="develop"
+            break 
+            ;;
+        "Tag personalizada")
+            echo "⚠️ Tag personalizada selecionada"
+            read -r -p "🏷️ Digite a tag (ex: latest, develop, sha-6ebc48e, ou nome da branch): " CUSTOM_TAG
+            DOCKER_TAG="$CUSTOM_TAG"
+            echo "✅ Tag definida: $DOCKER_TAG"
+            break
+            ;;
         *) echo "Opção inválida $REPLY";;
     esac
 done
 
 # 🔄 Se for atualização, faz apenas pull e up
 if [ "$MODO" == "update" ]; then
-    read -r -p "📦 Repositório GitHub (ex: usuario/repo ou org/repo): " GITHUB_REPO
+    read -r -p "📦 Repositório GitHub (ex: usuario/repo ou org/repo): " GITHUB_REPO_INPUT
+    GITHUB_REPO=$(normalize_github_repo "$GITHUB_REPO_INPUT")
+    echo "✅ Repositório normalizado: $GITHUB_REPO"
+    
     echo "🔐 Login no GitHub Container Registry (GHCR)..."
     echo "⚠️ Você precisa de um Personal Access Token (PAT) do GitHub com permissão 'read:packages'"
     echo "📝 Crie um em: https://github.com/settings/tokens"
@@ -56,8 +88,33 @@ if [ "$MODO" == "update" ]; then
     echo ""
     echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
 
-    # Substitui o placeholder do repositório GitHub
+    # Escolha da tag
+    echo ""
+    echo "🏷️ Selecione a tag da imagem:"
+    options=("latest" "develop" "Tag personalizada (ex: sha-6ebc48e)")
+    select opt in "${options[@]}"; do
+        case $opt in
+            "latest") 
+                DOCKER_TAG="latest"
+                break 
+                ;;
+            "develop") 
+                DOCKER_TAG="develop"
+                break 
+                ;;
+            "Tag personalizada (ex: sha-6ebc48e)")
+                read -r -p "🏷️ Digite a tag (ex: sha-6ebc48e, ou nome da branch): " CUSTOM_TAG
+                DOCKER_TAG="$CUSTOM_TAG"
+                break
+                ;;
+            *) echo "Opção inválida $REPLY";;
+        esac
+    done
+    echo "✅ Tag selecionada: $DOCKER_TAG"
+
+    # Substitui os placeholders
     sed -i "s|__GITHUB_REPO__|$GITHUB_REPO|g" ./docker-compose.yml
+    sed -i "s|__DOCKER_TAG__|$DOCKER_TAG|g" ./docker-compose.yml
 
     echo "⬇️ Atualizando imagens..."
     eval "$DOCKER_COMPOSE_CMD pull"
@@ -70,7 +127,9 @@ if [ "$MODO" == "update" ]; then
 fi
 
 # 📦 Repositório GitHub
-read -r -p "📦 Repositório GitHub (ex: usuario/repo ou org/repo): " GITHUB_REPO
+read -r -p "📦 Repositório GitHub (ex: usuario/repo ou org/repo): " GITHUB_REPO_INPUT
+GITHUB_REPO=$(normalize_github_repo "$GITHUB_REPO_INPUT")
+echo "✅ Repositório normalizado: $GITHUB_REPO"
 
 # 🛠️ Coleta de domínios
 read -r -p "🌐 DOMÍNIO do FRONTEND: " FRONTEND_URL
