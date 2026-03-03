@@ -123,6 +123,13 @@
       image: ghcr.io/__GITHUB_REPO__/channel:__DOCKER_TAG__
       container_name: aarca_channel
       env_file: ./channel/.env
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.channel.rule=Host(`__CHANNEL_URL__`)"
+        - "traefik.http.routers.channel.entrypoints=websecure"
+        - "traefik.http.routers.channel.tls=true"
+        - "traefik.http.routers.channel.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.channel.loadbalancer.server.port=8080"
       networks:
         - network_public
       restart: unless-stopped

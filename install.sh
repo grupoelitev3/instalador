@@ -138,6 +138,9 @@ ping -c 1 "$FRONTEND_URL" || echo "⚠️ Domínio $FRONTEND_URL não está aces
 read -r -p "🌐 DOMÍNIO do BACKEND: " BACKEND_URL
 ping -c 1 "$BACKEND_URL" || echo "⚠️ Domínio $BACKEND_URL não está acessível."
 
+read -r -p "🌐 DOMÍNIO do CHANNEL (webhook/API Meta): " CHANNEL_URL
+ping -c 1 "$CHANNEL_URL" || echo "⚠️ Domínio $CHANNEL_URL não está acessível."
+
 read -r -p "🌐 DOMÍNIO do S3: " S3_URL
 read -r -p "🌐 DOMÍNIO do STORAGE: " STORAGE_URL
 read -r -p "🌐 DOMÍNIO da TRANSCRIÇÃO: " TRANSCRICAO_URL
@@ -221,6 +224,7 @@ replace_vars() {
     sed -i \
         -e "s|__FRONTEND_URL__|$FRONTEND_URL|g" \
         -e "s|__BACKEND_URL__|$BACKEND_URL|g" \
+        -e "s|__CHANNEL_URL__|$CHANNEL_URL|g" \
         -e "s|__TRANSCRICAO_URL__|$TRANSCRICAO_URL|g" \
         -e "s|__S3_URL__|$S3_URL|g" \
         -e "s|__STORAGE_URL__|$STORAGE_URL|g" \
